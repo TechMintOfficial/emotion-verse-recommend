@@ -52,6 +52,15 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				emotion: {
+					happy: 'hsl(var(--happy))',
+					sad: 'hsl(var(--sad))',
+					angry: 'hsl(var(--angry))',
+					surprised: 'hsl(var(--surprised))',
+					fear: 'hsl(var(--fear))',
+					disgusted: 'hsl(var(--disgusted))',
+					neutral: 'hsl(var(--neutral))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
