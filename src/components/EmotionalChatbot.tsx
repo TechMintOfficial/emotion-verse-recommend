@@ -31,7 +31,7 @@ export const EmotionalChatbot: React.FC<EmotionalChatbotProps> = ({
     scrollToBottom();
   }, [messages]);
 
-  // Send welcome message when emotion changes
+  // Send welcome message when emotion changes or allow general chat
   useEffect(() => {
     if (emotion && messages.length === 0) {
       const welcomeResponse = chatbotService.getEmotionalResponse(emotion.emotion, language);
@@ -46,10 +46,10 @@ export const EmotionalChatbot: React.FC<EmotionalChatbotProps> = ({
       setMessages([botMessage]);
       chatbotService.addToContext(botMessage);
     }
-  }, [emotion, language, messages.length]);
+  }, [emotion, language]);
 
   const handleSend = async () => {
-    if (!inputValue.trim() || !emotion) return;
+    if (!inputValue.trim()) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -65,9 +65,10 @@ export const EmotionalChatbot: React.FC<EmotionalChatbotProps> = ({
 
     // Simulate typing delay
     setTimeout(() => {
+      const currentEmotionForResponse = emotion?.emotion || 'neutral';
       const botResponse = chatbotService.generateContextualResponse(
         inputValue,
-        emotion.emotion,
+        currentEmotionForResponse,
         language
       );
 
@@ -76,7 +77,7 @@ export const EmotionalChatbot: React.FC<EmotionalChatbotProps> = ({
         text: botResponse,
         sender: 'bot',
         timestamp: Date.now(),
-        emotion: emotion.emotion
+        emotion: emotion?.emotion
       };
 
       setMessages(prev => [...prev, botMessage]);
@@ -241,18 +242,22 @@ export const EmotionalChatbot: React.FC<EmotionalChatbotProps> = ({
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder={language === 'ta' ? "உங்கள் செய்தியை தட்டச்சு செய்யுங்கள்..." : "Type your message..."}
-              disabled={!emotion}
               className="flex-1"
             />
             <Button 
               onClick={handleSend} 
-              disabled={!inputValue.trim() || !emotion || isTyping}
+              disabled={!inputValue.trim() || isTyping}
               size="sm"
               className="emotion-glow"
             >
               <Send className="w-4 h-4" />
             </Button>
           </div>
+          {!emotion && (
+            <p className="text-xs text-muted-foreground mt-2">
+              {language === 'ta' ? 'உணர்ச்சி கண்டறிதலைத் தொடங்கி சிறந்த அனுபவத்தைப் பெறுங்கள்!' : 'Start emotion detection for a better chat experience!'}
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

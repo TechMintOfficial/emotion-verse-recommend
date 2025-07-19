@@ -75,12 +75,20 @@ export const EmotionDetector: React.FC<EmotionDetectorProps> = ({
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     try {
-      // Detect emotion from the captured frame
-      const emotion = await emotionService.detectEmotion(canvas);
+      // Check if face is present (basic detection)
+      const faceDetected = emotionService.detectFaceInImage(canvas);
       
-      if (emotion && emotion.confidence > 0.3) { // Only use confident predictions
-        setCurrentEmotion(emotion);
-        onEmotionDetected(emotion);
+      if (faceDetected) {
+        // Detect emotion from the captured frame
+        const emotion = await emotionService.detectEmotion(canvas);
+        
+        if (emotion && emotion.confidence > 0.5) {
+          console.log('Emotion detected:', emotion);
+          setCurrentEmotion(emotion);
+          onEmotionDetected(emotion);
+        }
+      } else {
+        console.log('No face detected in frame');
       }
     } catch (err) {
       console.error('Error detecting emotion:', err);
@@ -96,8 +104,16 @@ export const EmotionDetector: React.FC<EmotionDetectorProps> = ({
   useEffect(() => {
     if (!isActive) return;
 
-    const interval = setInterval(captureFrame, 2000); // Capture every 2 seconds
-    return () => clearInterval(interval);
+    // Initial capture after 2 seconds
+    const initialTimeout = setTimeout(captureFrame, 2000);
+    
+    // Then capture every 3 seconds
+    const interval = setInterval(captureFrame, 3000);
+    
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(interval);
+    };
   }, [isActive, captureFrame]);
 
   const getEmotionDisplay = () => {
