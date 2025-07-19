@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Film, Music, BookOpen, Star, Calendar, Globe } from 'lucide-react';
+import { Film, Music, BookOpen, Star, Calendar, Globe, ExternalLink } from 'lucide-react';
 import { contentDatabase, type ContentItem } from '@/data/contentDatabase';
 import { emotionService, type EmotionResult } from '@/services/emotionService';
 import { cn } from '@/lib/utils';
@@ -33,6 +33,12 @@ export const ContentSuggestions: React.FC<ContentSuggestionsProps> = ({
     );
   };
 
+  const handleContentClick = (item: ContentItem) => {
+    if (item.officialUrl) {
+      window.open(item.officialUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   const renderContentItem = (item: ContentItem, type: 'movies' | 'songs' | 'books') => {
     const emotionColor = emotion ? emotionService.getEmotionColor(emotion.emotion) : 'hsl(var(--primary))';
     
@@ -43,6 +49,7 @@ export const ContentSuggestions: React.FC<ContentSuggestionsProps> = ({
         style={{
           background: `linear-gradient(135deg, hsl(var(--card)), ${emotionColor}10)`
         }}
+        onClick={() => handleContentClick(item)}
       >
         <CardContent className="p-4">
           <div className="flex items-start justify-between mb-2">
@@ -54,9 +61,14 @@ export const ContentSuggestions: React.FC<ContentSuggestionsProps> = ({
                 </div>
               )}
             </h4>
-            {item.language === 'tamil' && (
-              <Badge variant="outline" className="text-xs ml-2">தமிழ்</Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {item.language === 'tamil' && (
+                <Badge variant="outline" className="text-xs">தமிழ்</Badge>
+              )}
+              {item.officialUrl && (
+                <ExternalLink className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
+              )}
+            </div>
           </div>
           
           <p className="text-xs text-muted-foreground mb-3 line-clamp-2">

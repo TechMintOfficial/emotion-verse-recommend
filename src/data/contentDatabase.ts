@@ -9,6 +9,7 @@ export interface ContentItem {
   rating?: number;
   language: 'english' | 'tamil' | 'both';
   image?: string;
+  officialUrl?: string;
 }
 
 export interface ContentDatabase {
@@ -27,7 +28,8 @@ export const contentDatabase: ContentDatabase = {
         genre: 'Drama',
         year: 2006,
         rating: 8.0,
-        language: 'english'
+        language: 'english',
+        officialUrl: 'https://www.imdb.com/title/tt0454921/'
       },
       {
         id: 'mov2',
@@ -36,7 +38,8 @@ export const contentDatabase: ContentDatabase = {
         genre: 'Animation',
         year: 2016,
         rating: 7.6,
-        language: 'english'
+        language: 'english',
+        officialUrl: 'https://www.imdb.com/title/tt3521164/'
       },
       {
         id: 'mov3',
@@ -47,7 +50,8 @@ export const contentDatabase: ContentDatabase = {
         genre: 'Action Thriller',
         year: 2017,
         rating: 8.4,
-        language: 'tamil'
+        language: 'tamil',
+        officialUrl: 'https://www.imdb.com/title/tt6148156/'
       },
       {
         id: 'mov4',
@@ -189,7 +193,8 @@ export const contentDatabase: ContentDatabase = {
         description: 'Pharrell Williams - Uplifting pop anthem',
         genre: 'Pop',
         year: 2013,
-        language: 'english'
+        language: 'english',
+        officialUrl: 'https://www.youtube.com/watch?v=ZbZSe6N_BXs'
       },
       {
         id: 'song2',
@@ -310,7 +315,8 @@ export const contentDatabase: ContentDatabase = {
         genre: 'Fiction',
         year: 1988,
         rating: 3.9,
-        language: 'english'
+        language: 'english',
+        officialUrl: 'https://www.goodreads.com/book/show/865.The_Alchemist'
       },
       {
         id: 'book2',
