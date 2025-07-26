@@ -168,13 +168,13 @@ export const ContentSuggestions: React.FC<ContentSuggestionsProps> = ({
           
           <TabsContent value="movies" className="space-y-3">
             <div className="grid gap-3">
-              {getContentForEmotion('movies').map(item => 
+              {content.movies.map(item => 
                 renderContentItem(item, 'movies')
               )}
-              {getContentForEmotion('movies').length === 0 && (
+              {content.movies.length === 0 && !loading && (
                 <div className="text-center text-muted-foreground py-6">
                   <Film className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>No movies found for this filter</p>
+                  <p>No movies found for this emotion</p>
                 </div>
               )}
             </div>
@@ -182,13 +182,13 @@ export const ContentSuggestions: React.FC<ContentSuggestionsProps> = ({
           
           <TabsContent value="songs" className="space-y-3">
             <div className="grid gap-3">
-              {getContentForEmotion('songs').map(item => 
+              {content.songs.map(item => 
                 renderContentItem(item, 'songs')
               )}
-              {getContentForEmotion('songs').length === 0 && (
+              {content.songs.length === 0 && !loading && (
                 <div className="text-center text-muted-foreground py-6">
                   <Music className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>No songs found for this filter</p>
+                  <p>No songs found for this emotion</p>
                 </div>
               )}
             </div>
@@ -196,13 +196,13 @@ export const ContentSuggestions: React.FC<ContentSuggestionsProps> = ({
           
           <TabsContent value="books" className="space-y-3">
             <div className="grid gap-3">
-              {getContentForEmotion('books').map(item => 
+              {content.books.map(item => 
                 renderContentItem(item, 'books')
               )}
-              {getContentForEmotion('books').length === 0 && (
+              {content.books.length === 0 && !loading && (
                 <div className="text-center text-muted-foreground py-6">
                   <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>No books found for this filter</p>
+                  <p>No books found for this emotion</p>
                 </div>
               )}
             </div>
