@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Film, Music, BookOpen, Star, Calendar, Globe, ExternalLink } from 'lucide-react';
-import { contentDatabase, type ContentItem } from '@/data/contentDatabase';
+import { apiService, type Movie, type Song, type Book } from '@/services/apiService';
 import { emotionService, type EmotionResult } from '@/services/emotionService';
 import { cn } from '@/lib/utils';
 
@@ -17,29 +17,41 @@ export const ContentSuggestions: React.FC<ContentSuggestionsProps> = ({
   emotion,
   className
 }) => {
-  const [selectedLanguage, setSelectedLanguage] = useState<'all' | 'english' | 'tamil'>('all');
+  const [content, setContent] = useState<{ movies: Movie[], songs: Song[], books: Book[] }>({
+    movies: [], songs: [], books: []
+  });
+  const [loading, setLoading] = useState(false);
 
-  const getContentForEmotion = (contentType: 'movies' | 'songs' | 'books'): ContentItem[] => {
-    if (!emotion) return [];
+  const loadContent = async () => {
+    if (!emotion) return;
     
-    const emotionContent = contentDatabase[contentType][emotion.emotion] || [];
-    
-    if (selectedLanguage === 'all') {
-      return emotionContent;
+    setLoading(true);
+    try {
+      const [movies, songs, books] = await Promise.all([
+        apiService.getMoviesByEmotion(emotion.emotion),
+        apiService.getSongsByEmotion(emotion.emotion),
+        apiService.getBooksByEmotion(emotion.emotion)
+      ]);
+      
+      setContent({ movies, songs, books });
+    } catch (error) {
+      console.error('Error loading content:', error);
+    } finally {
+      setLoading(false);
     }
-    
-    return emotionContent.filter(item => 
-      item.language === selectedLanguage || item.language === 'both'
-    );
   };
 
-  const handleContentClick = (item: ContentItem) => {
+  React.useEffect(() => {
+    loadContent();
+  }, [emotion]);
+
+  const handleContentClick = (item: Movie | Song | Book) => {
     if (item.officialUrl) {
       window.open(item.officialUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
-  const renderContentItem = (item: ContentItem, type: 'movies' | 'songs' | 'books') => {
+  const renderContentItem = (item: Movie | Song | Book, type: 'movies' | 'songs' | 'books') => {
     const emotionColor = emotion ? emotionService.getEmotionColor(emotion.emotion) : 'hsl(var(--primary))';
     
     return (
@@ -55,16 +67,18 @@ export const ContentSuggestions: React.FC<ContentSuggestionsProps> = ({
           <div className="flex items-start justify-between mb-2">
             <h4 className="font-medium text-sm leading-tight group-hover:text-primary transition-colors">
               {item.title}
-              {item.titleTamil && (
+              {'artist' in item && (
                 <div className="text-xs text-muted-foreground mt-1">
-                  {item.titleTamil}
+                  by {item.artist}
+                </div>
+              )}
+              {'author' in item && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  by {item.author}
                 </div>
               )}
             </h4>
             <div className="flex items-center gap-2">
-              {item.language === 'tamil' && (
-                <Badge variant="outline" className="text-xs">தமிழ்</Badge>
-              )}
               {item.officialUrl && (
                 <ExternalLink className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
               )}
@@ -73,9 +87,6 @@ export const ContentSuggestions: React.FC<ContentSuggestionsProps> = ({
           
           <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
             {item.description}
-            {item.descriptionTamil && selectedLanguage === 'tamil' && (
-              <span className="block mt-1">{item.descriptionTamil}</span>
-            )}
           </p>
           
           <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -90,7 +101,7 @@ export const ContentSuggestions: React.FC<ContentSuggestionsProps> = ({
                 </div>
               )}
             </div>
-            {item.rating && (
+            {('rating' in item && item.rating) && (
               <div className="flex items-center gap-1">
                 <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                 {item.rating}
@@ -130,30 +141,11 @@ export const ContentSuggestions: React.FC<ContentSuggestionsProps> = ({
             </div>
           </CardTitle>
           
-          <div className="flex gap-2">
-            <Button
-              variant={selectedLanguage === 'all' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedLanguage('all')}
-            >
-              <Globe className="w-3 h-3 mr-1" />
-              All
-            </Button>
-            <Button
-              variant={selectedLanguage === 'english' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedLanguage('english')}
-            >
-              EN
-            </Button>
-            <Button
-              variant={selectedLanguage === 'tamil' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedLanguage('tamil')}
-            >
-              தமிழ்
-            </Button>
-          </div>
+          {loading && (
+            <Badge variant="secondary">
+              Loading...
+            </Badge>
+          )}
         </div>
       </CardHeader>
       

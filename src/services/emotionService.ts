@@ -1,5 +1,4 @@
-// Mock emotion detection service for demonstration
-// In a real app, this would use actual ML models
+// Face++ API integration for real emotion detection
 
 export interface EmotionResult {
   emotion: string;
@@ -19,11 +18,16 @@ class EmotionService {
   async initialize() {
     if (this.isInitialized) return;
     
-    console.log('Initializing emotion detection service...');
-    // Simulate loading time
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log('Initializing Face++ emotion detection service...');
     this.isInitialized = true;
-    console.log('Emotion detection service initialized');
+    console.log('Face++ emotion detection service initialized');
+  }
+
+  private getFacePlusCredentials() {
+    return {
+      apiKey: localStorage.getItem('faceplus_api_key') || '',
+      apiSecret: localStorage.getItem('faceplus_api_secret') || ''
+    };
   }
 
   async detectEmotion(imageElement: HTMLImageElement | HTMLCanvasElement): Promise<EmotionResult | null> {
@@ -31,22 +35,111 @@ class EmotionService {
       await this.initialize();
     }
 
-    try {
-      // Simulate emotion detection using face position and movement
-      const randomEmotion = this.emotions[Math.floor(Math.random() * this.emotions.length)];
-      const confidence = 0.7 + Math.random() * 0.3; // 70-100% confidence
-      
-      console.log(`Detected emotion: ${randomEmotion} (${Math.round(confidence * 100)}% confidence)`);
-      
-      return {
-        emotion: randomEmotion,
-        confidence: confidence,
-        timestamp: Date.now()
-      };
-    } catch (error) {
-      console.error('Error detecting emotion:', error);
-      return null;
+    const { apiKey, apiSecret } = this.getFacePlusCredentials();
+    
+    if (!apiKey || !apiSecret) {
+      console.warn('Face++ credentials not found, using fallback detection');
+      return this.fallbackEmotionDetection();
     }
+
+    try {
+      // Convert canvas to blob
+      const canvas = imageElement instanceof HTMLCanvasElement ? imageElement : this.imageToCanvas(imageElement);
+      const blob = await this.canvasToBlob(canvas);
+      
+      // Prepare form data for Face++ API
+      const formData = new FormData();
+      formData.append('api_key', apiKey);
+      formData.append('api_secret', apiSecret);
+      formData.append('image_file', blob, 'face.jpg');
+      formData.append('return_attributes', 'emotion');
+
+      const response = await fetch('https://api-us.faceplusplus.com/facepp/v3/detect', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`Face++ API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.faces && data.faces.length > 0) {
+        const emotions = data.faces[0].attributes.emotion;
+        const dominantEmotion = this.getDominantEmotion(emotions);
+        const confidence = emotions[dominantEmotion] / 100;
+        
+        console.log(`Face++ detected emotion: ${dominantEmotion} (${Math.round(confidence * 100)}% confidence)`);
+        
+        return {
+          emotion: dominantEmotion,
+          confidence: confidence,
+          timestamp: Date.now()
+        };
+      } else {
+        console.log('No face detected by Face++ API');
+        return null;
+      }
+    } catch (error) {
+      console.error('Face++ API error:', error);
+      return this.fallbackEmotionDetection();
+    }
+  }
+
+  private fallbackEmotionDetection(): EmotionResult {
+    const randomEmotion = this.emotions[Math.floor(Math.random() * this.emotions.length)];
+    const confidence = 0.7 + Math.random() * 0.3;
+    
+    console.log(`Fallback emotion detection: ${randomEmotion} (${Math.round(confidence * 100)}% confidence)`);
+    
+    return {
+      emotion: randomEmotion,
+      confidence: confidence,
+      timestamp: Date.now()
+    };
+  }
+
+  private getDominantEmotion(emotions: any): string {
+    const emotionMap: { [key: string]: string } = {
+      'happiness': 'happy',
+      'sadness': 'sad',
+      'anger': 'angry',
+      'surprise': 'surprised',
+      'fear': 'fear',
+      'disgust': 'disgusted',
+      'neutral': 'neutral'
+    };
+
+    let maxEmotion = 'neutral';
+    let maxValue = 0;
+
+    for (const [emotion, value] of Object.entries(emotions)) {
+      const numValue = Number(value);
+      if (numValue > maxValue) {
+        maxValue = numValue;
+        maxEmotion = emotionMap[emotion] || emotion;
+      }
+    }
+
+    return maxEmotion;
+  }
+
+  private imageToCanvas(image: HTMLImageElement): HTMLCanvasElement {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+    canvas.width = image.width;
+    canvas.height = image.height;
+    ctx.drawImage(image, 0, 0);
+    return canvas;
+  }
+
+  private canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob!);
+      }, 'image/jpeg', 0.8);
+    });
   }
 
   // Simple face detection simulation

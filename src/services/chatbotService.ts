@@ -16,6 +16,135 @@ export interface EmotionalResponse {
 }
 
 class ChatbotService {
+  private getXaiApiKey(): string {
+    return localStorage.getItem('xai_api_key') || '';
+  }
+
+  async generateXaiResponse(message: string, emotion?: string): Promise<string> {
+    const apiKey = this.getXaiApiKey();
+    
+    if (!apiKey) {
+      console.warn('XAI API key not found, using fallback responses');
+      return this.getFallbackResponse(message, emotion);
+    }
+
+    try {
+      const systemPrompt = this.buildSystemPrompt(emotion);
+      
+      const response = await fetch('https://api.x.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'grok-beta',
+          messages: [
+            {
+              role: 'system',
+              content: systemPrompt
+            },
+            {
+              role: 'user',
+              content: message
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 300
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`XAI API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.choices[0]?.message?.content || this.getFallbackResponse(message, emotion);
+    } catch (error) {
+      console.error('XAI API error:', error);
+      return this.getFallbackResponse(message, emotion);
+    }
+  }
+
+  private buildSystemPrompt(emotion?: string): string {
+    const basePrompt = `You are an empathetic AI companion integrated into EmotiSense, an emotion-detection app that recommends movies, songs, and books in English and Tamil languages. 
+
+Your role:
+- Provide supportive, warm, and understanding responses
+- Match your tone to the user's detected emotion
+- Suggest relevant content (movies, songs, books) when appropriate
+- Keep responses concise (2-3 sentences max)
+- Use appropriate emojis to convey emotion
+- Support both English and Tamil users
+- Be encouraging and positive`;
+
+    if (emotion) {
+      const emotionContext = `\n\nCurrent detected emotion: ${emotion}
+      
+Tailor your response to this emotion:
+- ${emotion === 'happy' ? 'Celebrate their joy and suggest uplifting content' : ''}
+- ${emotion === 'sad' ? 'Offer comfort and gentle, healing content suggestions' : ''}
+- ${emotion === 'angry' ? 'Acknowledge their feelings and suggest powerful or calming content' : ''}
+- ${emotion === 'surprised' ? 'Match their excitement with thrilling suggestions' : ''}
+- ${emotion === 'fear' ? 'Provide reassurance and calming content' : ''}
+- ${emotion === 'disgusted' ? 'Offer cleansing, refreshing content options' : ''}
+- ${emotion === 'neutral' ? 'Be friendly and ask about their preferences' : ''}`;
+      
+      return basePrompt + emotionContext;
+    }
+
+    return basePrompt;
+  }
+
+  private getFallbackResponse(message: string, emotion?: string): string {
+    const responses: { [key: string]: string[] } = {
+      happy: [
+        "I'm so glad you're feeling happy! 😊 Would you like me to suggest some uplifting content to keep your spirits high?",
+        "Your happiness is contagious! ✨ Let's celebrate with some feel-good movies or music!"
+      ],
+      sad: [
+        "I notice you're feeling a bit down. 💙 Sometimes a good cry with the right movie or song can be healing.",
+        "I'm here for you. 💜 Let me suggest some gentle, uplifting content that might help."
+      ],
+      angry: [
+        "I can sense your frustration. 🔥 Sometimes action movies or intense music can help channel that energy.",
+        "I understand you're upset. ⚡ Let me find something that resonates with how you're feeling right now."
+      ],
+      neutral: [
+        "You seem pretty balanced today! 😌 What kind of mood are you in the mood for?",
+        "A calm state of mind is wonderful. ☯️ What type of content interests you today?"
+      ],
+      surprised: [
+        "Oh, you look surprised! 😲 That's exciting! Want some thrilling content to match that energy?",
+        "Surprise can be such a fun emotion! ✨ Let me find something equally exciting for you."
+      ],
+      fear: [
+        "I notice you might be feeling anxious. 🌙 Would you like some calming, comforting content?",
+        "I'm here to help you feel safe. 🤲 How about some gentle, reassuring content?"
+      ],
+      disgusted: [
+        "I can see you're not feeling great about something. 🌿 Let me find some cleansing, refreshing content.",
+        "I understand that feeling. 🌱 Let me suggest something clean and uplifting."
+      ]
+    };
+
+    const generalResponses = [
+      "Hello! I'm here to help you discover amazing content based on how you're feeling. How are you today?",
+      "I'm your emotional companion! Tell me how you're feeling and I'll suggest perfect content for your mood."
+    ];
+
+    const lowerMessage = message.toLowerCase();
+
+    if (emotion && responses[emotion]) {
+      const emotionResponses = responses[emotion];
+      return emotionResponses[Math.floor(Math.random() * emotionResponses.length)];
+    } else if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+      return generalResponses[Math.floor(Math.random() * generalResponses.length)];
+    } else {
+      return "I understand you're looking for recommendations! I work best when I can detect your emotions through the camera. Would you like to start emotion detection?";
+    }
+  }
+
   private emotionalResponses: { [emotion: string]: EmotionalResponse[] } = {
     happy: [
       {
