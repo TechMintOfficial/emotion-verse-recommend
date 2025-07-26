@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { EmotionDetector } from '@/components/EmotionDetector';
 import { ContentSuggestions } from '@/components/ContentSuggestions';
 import { EmotionalChatbot } from '@/components/EmotionalChatbot';
+import { ApiKeysInput } from '@/components/ApiKeysInput';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Brain, Heart, Sparkles } from 'lucide-react';
@@ -56,6 +57,11 @@ const Index = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* API Configuration */}
+      <div className="container mx-auto px-4 pb-6">
+        <ApiKeysInput className="mb-6" />
       </div>
 
       {/* Main Content */}

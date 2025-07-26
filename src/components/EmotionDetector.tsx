@@ -75,23 +75,22 @@ export const EmotionDetector: React.FC<EmotionDetectorProps> = ({
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     try {
-      // Check if face is present (basic detection)
-      const faceDetected = emotionService.detectFaceInImage(canvas);
+      console.log('Analyzing frame for face detection...');
       
-      if (faceDetected) {
-        // Detect emotion from the captured frame
-        const emotion = await emotionService.detectEmotion(canvas);
-        
-        if (emotion && emotion.confidence > 0.5) {
-          console.log('Emotion detected:', emotion);
-          setCurrentEmotion(emotion);
-          onEmotionDetected(emotion);
-        }
+      // Use Face++ API for accurate emotion detection
+      const emotion = await emotionService.detectEmotion(canvas);
+      
+      if (emotion && emotion.confidence > 0.6) { // Higher confidence threshold
+        console.log('Face++ detected emotion:', emotion);
+        setCurrentEmotion(emotion);
+        onEmotionDetected(emotion);
       } else {
-        console.log('No face detected in frame');
+        console.log('No face detected by Face++ or low confidence');
+        setCurrentEmotion(null);
       }
     } catch (err) {
-      console.error('Error detecting emotion:', err);
+      console.error('Error with Face++ emotion detection:', err);
+      setCurrentEmotion(null);
     }
   }, [isActive, onEmotionDetected]);
 
